@@ -188,7 +188,6 @@ def calibration_plots(labels, scores, attr, n, group_names):
 
 
 def eopp_plots(labels, scores, attr, group_names):
-
     fig = make_subplots(
         rows=2,
         cols=1,
@@ -272,3 +271,4 @@ def eo_plots(labels, scores, attr, group_names):
     fig.update_xaxes(title_text="Mean score", row=2, col=1)
 
     return fig.update_layout(title_text="Equalised odds")
+=======
