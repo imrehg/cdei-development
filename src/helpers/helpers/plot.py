@@ -141,7 +141,7 @@ def group_roc_curves(labels, scores, attr):
     )
 
 
-def calibration_plots(labels, scores, attr, n):
+def calibration_plots_finance(labels, scores, attr, n):
     cali_results = [
         calibration(scores[0], attr, labels, n)[1],
         calibration(scores[1], attr, labels, n)[1],
@@ -185,3 +185,90 @@ def calibration_plots(labels, scores, attr, n):
         for i in range(2)
     ]
     return fig.update_layout(height=600, width=800, title_text="Calibration")
+
+
+def eopp_plots_finance(labels, scores, attr):
+
+    fig = make_subplots(
+        rows=2,
+        cols=1,
+        shared_xaxes=True,
+        vertical_spacing=0.1,
+        subplot_titles=("Baseline Model", "Corrected Model"),
+    )
+    for i in range(2):
+        fig.append_trace(
+            go.Bar(
+                x=[scores[i][(attr == 0) & (labels == 1)].mean()],
+                y=[""],
+                name="Female and high earner",
+                showlegend=False if i == 1 else True,
+                marker_color="firebrick",
+                width=[0.2, 0.2],
+                orientation="h",
+            ),
+            row=i + 1,
+            col=1,
+        )
+        fig.append_trace(
+            go.Bar(
+                x=[scores[i][(attr == 1) & (labels == 1)].mean()],
+                y=[""],
+                name="Male and high earner",
+                showlegend=False if i == 1 else True,
+                marker_color="royalblue",
+                width=[0.2, 0.2],
+                orientation="h",
+            ),
+            row=i + 1,
+            col=1,
+        )
+    fig.update_xaxes(title_text="Mean score", row=2, col=1)
+
+    return fig.update_layout(title_text="Equal opportunity")
+
+
+def eo_plots_finance(labels, scores, attr):
+
+    fig = make_subplots(
+        rows=2,
+        cols=1,
+        shared_xaxes=True,
+        vertical_spacing=0.1,
+        subplot_titles=("Baseline Model", "Corrected Model"),
+    )
+    for i in range(2):
+        for j in range(2):
+            fig.append_trace(
+                go.Bar(
+                    x=[scores[i][(attr == 0) & (labels == j)].mean()],
+                    y=[""],
+                    name="Female and high earner"
+                    if j == 1
+                    else "Female and low earner",
+                    showlegend=False if i == 1 else True,
+                    marker_color="firebrick" if j == 1 else "red",
+                    width=[0.2, 0.2],
+                    orientation="h",
+                ),
+                row=i + 1,
+                col=1,
+            )
+            fig.append_trace(
+                go.Bar(
+                    x=[scores[i][(attr == 1) & (labels == j)].mean()],
+                    y=[""],
+                    name="Male and high earner"
+                    if j == 1
+                    else "Male and low earner",
+                    showlegend=False if i == 1 else True,
+                    marker_color="royalblue" if j == 1 else "blue",
+                    width=[0.2, 0.2],
+                    orientation="h",
+                ),
+                row=i + 1,
+                col=1,
+            )
+    fig.update_xaxes(title_text="Mean score", row=2, col=1)
+
+    return fig.update_layout(title_text="Equalised odds")
