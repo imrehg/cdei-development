@@ -81,52 +81,41 @@ def equalised_odds_prob(labels, scores, attr):
     return np.mean([eo_0, eo_1])
 
 
-def calibration(labels, scores, attr, n_bins=10):
+def calibration_probabilities(labels, scores, n_bins=10):
     """
-    Computes calibration
+    Computes calibration probabilities per bin (i.e. P(Y = 1 | score)) for a
+    set of scores and labels.
     """
-    a_mask = attr == 1
-    y_mask = labels == 1
-
-    # Count differences between two groups within bins
     bins = np.linspace(0, 1, n_bins + 1)
+    probabilities = np.zeros(n_bins)
 
-    proportions = {
-        "y1_in_a0": [],
-        "y1_in_a1": [],
-    }
+    for i, (low, high) in enumerate(zip(bins[:-1], bins[1:])):
+        if high == 1:
+            # allow equality with one in the final bin
+            high = 1.01
 
-    for i in range(len(bins) - 1):
-        y1_a0 = (
-            (scores[~a_mask & y_mask] > bins[i])
-            & (scores[~a_mask & y_mask] < bins[i + 1])
-        ).sum()
-        if y1_a0 > 0:
-            proportions["y1_in_a0"].append(
-                y1_a0
-                / (
-                    (scores[~a_mask] > bins[i])
-                    & (scores[~a_mask] < bins[i + 1])
-                ).sum()
-            )
-        else:
-            proportions["y1_in_a0"].append(0.0)
+        mask = (scores >= low) & (scores < high)
+        probabilities[i] = labels[mask].mean()
 
-        y1_a1 = (
-            (scores[a_mask & y_mask] > bins[i])
-            & (scores[a_mask & y_mask] < bins[i + 1])
-        ).sum()
-        if y1_a1 > 0:
-            proportions["y1_in_a1"].append(
-                y1_a1
-                / (
-                    (scores[a_mask] > bins[i]) & (scores[a_mask] < bins[i + 1])
-                ).sum()
-            )
-        else:
-            proportions["y1_in_a1"].append(0.0)
-    cal_y1 = np.abs(
-        np.array(proportions["y1_in_a0"]) - np.array(proportions["y1_in_a1"])
-    ).sum()
+    return probabilities
 
-    return 1.0 - cal_y1 / n_bins, proportions
+
+def calibration_difference(labels, scores, attr, n_bins=10):
+    """
+    Computes average calibration difference between protected groups. Currently
+    assumes binary protected attribute.
+    """
+    mask = attr == 1
+
+    a0_calibration_probabilities = calibration_probabilities(
+        labels[~mask], scores[~mask], n_bins
+    )
+    a1_calibration_probabilities = calibration_probabilities(
+        labels[mask], scores[mask], n_bins
+    )
+
+    # if a bin is empty we get a nan, so use nanmean to aggregate only over
+    # mutually non-empty bins
+    return np.nanmean(
+        np.abs(a0_calibration_probabilities - a1_calibration_probabilities)
+    )
