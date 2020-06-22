@@ -1,7 +1,10 @@
 import numpy as np
 import plotly
 import plotly.graph_objs as go
+from plotly.subplots import make_subplots
 from sklearn.metrics import roc_curve
+from helpers.fairness_measures import calibration
+
 
 COLORS = plotly.colors.qualitative.Plotly
 
@@ -136,3 +139,49 @@ def group_roc_curves(labels, scores, attr):
             "yaxis": {"title": "True Positive Rate"},
         },
     )
+
+
+def calibration_plots(labels, scores, attr, n):
+    cali_results = [
+        calibration(scores[0], attr, labels, n)[1],
+        calibration(scores[1], attr, labels, n)[1],
+    ]
+    x = np.arange(n + 1) / n
+    fig = make_subplots(
+        rows=2,
+        cols=1,
+        shared_xaxes=True,
+        vertical_spacing=0.05,
+        subplot_titles=("Baseline Model", "Corrected Model"),
+    )
+    for i in range(2):
+        fig.append_trace(
+            go.Scatter(
+                x=x,
+                y=cali_results[i]["y1_in_a0"],
+                name="Female",
+                line=dict(color="firebrick", width=3),
+                showlegend=False if i == 1 else True,
+            ),
+            row=i + 1,
+            col=1,
+        )
+        fig.append_trace(
+            go.Scatter(
+                x=x,
+                y=cali_results[i]["y1_in_a1"],
+                name="Male",
+                line=dict(color="royalblue", width=3),
+                showlegend=False if i == 1 else True,
+            ),
+            row=i + 1,
+            col=1,
+        )
+    fig.update_xaxes(
+        title_text="Chance of >50K", range=[-0.05, 1.0], row=2, col=1
+    )
+    [
+        fig.update_yaxes(title_text="Risk score", row=i + 1, col=1)
+        for i in range(2)
+    ]
+    return fig.update_layout(height=600, width=800, title_text="Calibration")

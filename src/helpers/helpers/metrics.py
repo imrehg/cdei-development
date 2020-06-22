@@ -91,48 +91,42 @@ def calibration(labels, scores, attr, n_bins=10):
     # Count differences between two groups within bins
     bins = np.linspace(0, 1, n_bins + 1)
 
-    cal_y1 = 0
-    cal_y0 = 0
+    proportions = {
+        "y1_in_a0": [],
+        "y1_in_a1": [],
+    }
+
     for i in range(len(bins) - 1):
-        proportion_y1_a0 = (
-            (
-                (scores[~a_mask & y_mask] > bins[i])
-                & (scores[~a_mask & y_mask] < bins[i + 1])
-            ).sum()
-            / (
-                (scores[~a_mask] > bins[i]) & (scores[~a_mask] < bins[i + 1])
-            ).sum()
-        )
-        proportion_y1_a1 = (
-            (
-                (scores[a_mask & y_mask] > bins[i])
-                & (scores[a_mask & y_mask] < bins[i + 1])
-            ).sum()
-            / (
-                (scores[a_mask] > bins[i]) & (scores[a_mask] < bins[i + 1])
-            ).sum()
-        )
-        cal_y1 += 1.0 - np.abs(proportion_y1_a0 - proportion_y1_a1)
+        y1_a0 = (
+            (scores[~a_mask & y_mask] > bins[i])
+            & (scores[~a_mask & y_mask] < bins[i + 1])
+        ).sum()
+        if y1_a0 > 0:
+            proportions["y1_in_a0"].append(
+                y1_a0
+                / (
+                    (scores[~a_mask] > bins[i])
+                    & (scores[~a_mask] < bins[i + 1])
+                ).sum()
+            )
+        else:
+            proportions["y1_in_a0"].append(0.0)
 
-        proportion_y0_a0 = (
-            (
-                (scores[~a_mask & ~y_mask] > bins[i])
-                & (scores[~a_mask & ~y_mask] < bins[i + 1])
-            ).sum()
-            / (
-                (scores[~a_mask] > bins[i]) & (scores[~a_mask] < bins[i + 1])
-            ).sum()
-        )
+        y1_a1 = (
+            (scores[a_mask & y_mask] > bins[i])
+            & (scores[a_mask & y_mask] < bins[i + 1])
+        ).sum()
+        if y1_a1 > 0:
+            proportions["y1_in_a1"].append(
+                y1_a1
+                / (
+                    (scores[a_mask] > bins[i]) & (scores[a_mask] < bins[i + 1])
+                ).sum()
+            )
+        else:
+            proportions["y1_in_a1"].append(0.0)
+    cal_y1 = np.abs(
+        np.array(proportions["y1_in_a0"]) - np.array(proportions["y1_in_a1"])
+    ).sum()
 
-        proportion_y0_a1 = (
-            (
-                (scores[a_mask & ~y_mask] > bins[i])
-                & (scores[a_mask & ~y_mask] < bins[i + 1])
-            ).sum()
-            / (
-                (scores[a_mask] > bins[i]) & (scores[a_mask] < bins[i + 1])
-            ).sum()
-        )
-        cal_y0 += 1.0 - np.abs(proportion_y0_a0 - proportion_y0_a1)
-
-    return np.mean([cal_y1, cal_y0]) / n_bins
+    return 1.0 - cal_y1 / n_bins, proportions
