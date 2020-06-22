@@ -141,7 +141,7 @@ def group_roc_curves(labels, scores, attr):
     )
 
 
-def calibration_plots_finance(labels, scores, attr, n):
+def calibration_plots(labels, scores, attr, n, group_names):
     cali_results = [
         calibration(scores[0], attr, labels, n)[1],
         calibration(scores[1], attr, labels, n)[1],
@@ -159,7 +159,7 @@ def calibration_plots_finance(labels, scores, attr, n):
             go.Scatter(
                 x=x,
                 y=cali_results[i]["y1_in_a0"],
-                name="Female",
+                name=group_names[0],
                 line=dict(color="firebrick", width=3),
                 showlegend=False if i == 1 else True,
             ),
@@ -170,7 +170,7 @@ def calibration_plots_finance(labels, scores, attr, n):
             go.Scatter(
                 x=x,
                 y=cali_results[i]["y1_in_a1"],
-                name="Male",
+                name=group_names[1],
                 line=dict(color="royalblue", width=3),
                 showlegend=False if i == 1 else True,
             ),
@@ -178,7 +178,7 @@ def calibration_plots_finance(labels, scores, attr, n):
             col=1,
         )
     fig.update_xaxes(
-        title_text="Chance of >50K", range=[-0.05, 1.0], row=2, col=1
+        title_text="Chance of positive outcome", range=[-0.05, 1.0], row=2, col=1
     )
     [
         fig.update_yaxes(title_text="Risk score", row=i + 1, col=1)
@@ -187,7 +187,7 @@ def calibration_plots_finance(labels, scores, attr, n):
     return fig.update_layout(height=600, width=800, title_text="Calibration")
 
 
-def eopp_plots_finance(labels, scores, attr):
+def eopp_plots(labels, scores, attr, group_names):
 
     fig = make_subplots(
         rows=2,
@@ -201,7 +201,7 @@ def eopp_plots_finance(labels, scores, attr):
             go.Bar(
                 x=[scores[i][(attr == 0) & (labels == 1)].mean()],
                 y=[""],
-                name="Female and high earner",
+                name=group_names[0],
                 showlegend=False if i == 1 else True,
                 marker_color="firebrick",
                 width=[0.2, 0.2],
@@ -214,7 +214,7 @@ def eopp_plots_finance(labels, scores, attr):
             go.Bar(
                 x=[scores[i][(attr == 1) & (labels == 1)].mean()],
                 y=[""],
-                name="Male and high earner",
+                name=group_names[1],
                 showlegend=False if i == 1 else True,
                 marker_color="royalblue",
                 width=[0.2, 0.2],
@@ -228,7 +228,7 @@ def eopp_plots_finance(labels, scores, attr):
     return fig.update_layout(title_text="Equal opportunity")
 
 
-def eo_plots_finance(labels, scores, attr):
+def eo_plots(labels, scores, attr, group_names):
 
     fig = make_subplots(
         rows=2,
@@ -243,9 +243,9 @@ def eo_plots_finance(labels, scores, attr):
                 go.Bar(
                     x=[scores[i][(attr == 0) & (labels == j)].mean()],
                     y=[""],
-                    name="Female and high earner"
+                    name=group_names[1]
                     if j == 1
-                    else "Female and low earner",
+                    else group_names[0],
                     showlegend=False if i == 1 else True,
                     marker_color="firebrick" if j == 1 else "red",
                     width=[0.2, 0.2],
@@ -258,9 +258,9 @@ def eo_plots_finance(labels, scores, attr):
                 go.Bar(
                     x=[scores[i][(attr == 1) & (labels == j)].mean()],
                     y=[""],
-                    name="Male and high earner"
+                    name=group_names[3]
                     if j == 1
-                    else "Male and low earner",
+                    else group_names[2],
                     showlegend=False if i == 1 else True,
                     marker_color="royalblue" if j == 1 else "blue",
                     width=[0.2, 0.2],
