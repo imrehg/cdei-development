@@ -30,7 +30,7 @@ export const LazyPlot = ({ ...rest }) => (
         autosize: true,
       }}
       style={{ width: `100%` }}
-      useResizeHandler
+      useResizeHandler={false}
       config={{
         displayModeBar: false,
         showTips: false,
